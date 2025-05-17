@@ -2,10 +2,12 @@ package com.artillexstudios.axtrade.trade;
 
 import com.artillexstudios.axapi.scheduler.Scheduler;
 import com.artillexstudios.axapi.utils.ContainerUtils;
+import com.artillexstudios.axtrade.AxTrade;
 import com.artillexstudios.axtrade.api.events.AxTradeAbortEvent;
 import com.artillexstudios.axtrade.api.events.AxTradeCompleteEvent;
 import com.artillexstudios.axtrade.currency.CurrencyProcessor;
 import com.artillexstudios.axtrade.hooks.currency.CurrencyHook;
+import com.artillexstudios.axtrade.trade.logging.TradeLogger;
 import com.artillexstudios.axtrade.utils.HistoryUtils;
 import com.artillexstudios.axtrade.utils.NumberUtils;
 import com.artillexstudios.axtrade.utils.SoundUtils;
@@ -100,6 +102,11 @@ public class Trade {
             return;
         }
 
+        TradeLogger.logTrade(this).exceptionally(ex -> {
+            ex.printStackTrace();
+            abort();
+            return null;
+        }).thenAcceptAsync(result -> { // This is intentionally not indented properly
         CurrencyProcessor currencyProcessor1 = new CurrencyProcessor(player1.getPlayer(), player1.getCurrencies().entrySet());
         currencyProcessor1.run().thenAccept(success1 -> {
             if (!success1) {
@@ -196,7 +203,7 @@ public class Trade {
                         String.format("%s: [Currencies: %s] [Items: %s] | %s: [Currencies: %s] [Items: %s]",
                                 player1.getPlayer().getName(), player1Currencies.isEmpty() ? "---" : String.join(", ", player1Currencies), player1Items.isEmpty() ? "---" : String.join(", ", player1Items), player2.getPlayer().getName(), player2Currencies.isEmpty() ? "---" : String.join(", ", player2Currencies), player2Items.isEmpty() ? "---" : String.join(", ", player2Items)));
             });
-        });
+        }); }, Bukkit.getScheduler().getMainThreadExecutor(AxTrade.getInstance()));
     }
 
     public long getPrepTime() {

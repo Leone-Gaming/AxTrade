@@ -18,6 +18,7 @@ import com.artillexstudios.axtrade.lang.LanguageManager;
 import com.artillexstudios.axtrade.listeners.EntityInteractListener;
 import com.artillexstudios.axtrade.listeners.TradeListeners;
 import com.artillexstudios.axtrade.trade.TradeTicker;
+import com.artillexstudios.axtrade.trade.logging.database.Database;
 import com.artillexstudios.axtrade.utils.NumberUtils;
 import com.artillexstudios.axtrade.utils.UpdateNotifier;
 import net.kyori.adventure.platform.bukkit.BukkitAudiences;
@@ -35,7 +36,6 @@ public final class AxTrade extends AxPlugin {
     public static MessageUtils MESSAGEUTILS;
     private static AxPlugin instance;
     private static ThreadedQueue<Runnable> threadedQueue;
-    public static BukkitAudiences BUKKITAUDIENCES;
     private static AxMetrics metrics;
 
     public static ThreadedQueue<Runnable> getThreadedQueue() {
@@ -64,8 +64,6 @@ public final class AxTrade extends AxPlugin {
 
         threadedQueue = new ThreadedQueue<>("AxTrade-Datastore-thread");
 
-        BUKKITAUDIENCES = BukkitAudiences.create(this);
-
         getServer().getPluginManager().registerEvents(new EntityInteractListener(), this);
         getServer().getPluginManager().registerEvents(new TradeListeners(), this);
 
@@ -73,6 +71,8 @@ public final class AxTrade extends AxPlugin {
         NumberUtils.reload();
 
         TradeTicker.start();
+
+        Database.setup();
 
         Commands.registerCommand();
 
@@ -86,6 +86,8 @@ public final class AxTrade extends AxPlugin {
 
     public void disable() {
         if (metrics != null) metrics.cancel();
+
+        Database.close();
     }
 
     public void updateFlags(FeatureFlags flags) {

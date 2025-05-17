@@ -9,7 +9,6 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.artillexstudios.axtrade.AxTrade.BUKKITAUDIENCES;
 import static com.artillexstudios.axtrade.AxTrade.LANG;
 
 public class SoundUtils {
@@ -20,7 +19,7 @@ public class SoundUtils {
 
         try {
             final Sound sound = Sound.sound().type(Key.key(LANG.getString("sounds." + route))).build();
-            BUKKITAUDIENCES.player(player).playSound(sound);
+            player.playSound(sound);
         } catch (InvalidKeyException ex) {
             Bukkit.getConsoleSender().sendMessage(StringUtils.formatToString("&#FF0000[AxTrade] The sound %sound% does not exist, section: %section%!".replace("%sound%", LANG.getString("sounds." + route)).replace("%section%", route)));
         }
