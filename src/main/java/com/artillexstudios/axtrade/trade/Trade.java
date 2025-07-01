@@ -19,6 +19,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import static com.artillexstudios.axtrade.AxTrade.CONFIG;
 import static com.artillexstudios.axtrade.AxTrade.LANG;
@@ -95,6 +96,7 @@ public class Trade {
 
     public void complete() {
         end();
+
         for (Map.Entry<CurrencyHook, Double> entry : player1.getCurrencies().entrySet()) {
             if (entry.getKey().getBalance(player1.getPlayer().getUniqueId()) < entry.getValue()) {
                 abort(true);
@@ -116,11 +118,12 @@ public class Trade {
             return;
         }
 
-        TradeLogger.logTrade(this).exceptionally(ex -> {
-            ex.printStackTrace();
-            abort();
-            return null;
-        }).thenAcceptAsync(result -> { // This is intentionally not indented properly
+        TradeLogger.logTrade(this)
+                .exceptionally(ex -> {
+                    AxTrade.getInstance().getLogger().log(Level.WARNING, "Failed to log trade", ex);
+                    return null;
+                });
+
         CurrencyProcessor currencyProcessor1 = new CurrencyProcessor(player1.getPlayer(), player1.getCurrencies().entrySet());
         currencyProcessor1.run().thenAccept(success1 -> {
             if (!success1) {
@@ -213,7 +216,7 @@ public class Trade {
                         String.format("%s: [Currencies: %s] [Items: %s] | %s: [Currencies: %s] [Items: %s]",
                                 player1.getPlayer().getName(), player1Currencies.isEmpty() ? "---" : String.join(", ", player1Currencies), player1Items.isEmpty() ? "---" : String.join(", ", player1Items), player2.getPlayer().getName(), player2Currencies.isEmpty() ? "---" : String.join(", ", player2Currencies), player2Items.isEmpty() ? "---" : String.join(", ", player2Items)));
             });
-        }); }, Bukkit.getScheduler().getMainThreadExecutor(AxTrade.getInstance()));
+        });
     }
 
     public long getPrepTime() {
