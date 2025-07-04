@@ -1,6 +1,7 @@
 package com.artillexstudios.axtrade.hooks.currency;
 
 import com.artillexstudios.axapi.libs.boostedyaml.block.implementation.Section;
+import com.artillexstudios.axtrade.AxTrade;
 import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -67,7 +68,9 @@ public class PlaceholderCurrencyHook implements CurrencyHook {
         final String placeholder = section.getString("settings.give-command")
                 .replace("%amount%", parseNumber(amount))
                 .replace("%player%", pl.getName());
-        return CompletableFuture.completedFuture(Bukkit.dispatchCommand(Bukkit.getConsoleSender(), placeholder));
+
+        Bukkit.getGlobalRegionScheduler().run(AxTrade.getInstance(), task -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), placeholder));
+        return CompletableFuture.completedFuture(true);
     }
 
     @Override
@@ -79,7 +82,9 @@ public class PlaceholderCurrencyHook implements CurrencyHook {
         final String placeholder = section.getString("settings.take-command")
                 .replace("%amount%", parseNumber(amount))
                 .replace("%player%", pl.getName());
-        return CompletableFuture.completedFuture(Bukkit.dispatchCommand(Bukkit.getConsoleSender(), placeholder));
+
+        Bukkit.getGlobalRegionScheduler().run(AxTrade.getInstance(), task -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), placeholder));
+        return CompletableFuture.completedFuture(true);
     }
 
     private String parseNumber(double amount) {
