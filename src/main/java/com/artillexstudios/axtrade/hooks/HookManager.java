@@ -6,6 +6,8 @@ import com.artillexstudios.axtrade.hooks.currency.CurrencyHook;
 import com.artillexstudios.axtrade.hooks.currency.ExperienceHook;
 import com.artillexstudios.axtrade.hooks.currency.PlaceholderCurrencyHook;
 import com.artillexstudios.axtrade.hooks.currency.VaultHook;
+import com.artillexstudios.axtrade.hooks.other.AxShulkersHook;
+import com.artillexstudios.axtrade.hooks.other.Placeholders;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +19,18 @@ import static com.artillexstudios.axtrade.AxTrade.HOOKS;
 
 public class HookManager {
     private static final ArrayList<CurrencyHook> currency = new ArrayList<>();
+    private static AxShulkersHook axShulkersHook = null;
 
     public static void setupHooks() {
         updateHooks();
+
+        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+            new Placeholders();
+        }
+
+        if (Bukkit.getPluginManager().getPlugin("AxShulkers") != null) {
+            axShulkersHook = new AxShulkersHook();
+        }
     }
 
     public static void updateHooks() {
@@ -71,5 +82,9 @@ public class HookManager {
         }
 
         return null;
+    }
+
+    public static AxShulkersHook getAxShulkersHook() {
+        return axShulkersHook;
     }
 }
