@@ -12,7 +12,7 @@ import com.artillexstudios.axapi.metrics.AxMetrics;
 import com.artillexstudios.axapi.utils.MessageUtils;
 import com.artillexstudios.axapi.utils.StringUtils;
 import com.artillexstudios.axapi.utils.featureflags.FeatureFlags;
-import com.artillexstudios.axtrade.commands.Commands;
+import com.artillexstudios.axtrade.commands.CommandManager;
 import com.artillexstudios.axtrade.hooks.HookManager;
 import com.artillexstudios.axtrade.lang.LanguageManager;
 import com.artillexstudios.axtrade.listeners.EntityInteractListener;
@@ -22,7 +22,6 @@ import com.artillexstudios.axtrade.trade.TradeTicker;
 import com.artillexstudios.axtrade.trade.logging.database.Database;
 import com.artillexstudios.axtrade.utils.NumberUtils;
 import com.artillexstudios.axtrade.utils.UpdateNotifier;
-import net.kyori.adventure.platform.bukkit.BukkitAudiences;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 
@@ -50,8 +49,7 @@ public final class AxTrade extends AxPlugin {
     public void enable() {
         instance = this;
 
-        int pluginId = 21500;
-        new Metrics(this, pluginId);
+        new Metrics(this, 21500);
 
         CONFIG = new Config(new File(getDataFolder(), "config.yml"), getResource("config.yml"), GeneralSettings.builder().setUseDefaults(false).build(), LoaderSettings.builder().setAutoUpdate(true).build(), DumperSettings.DEFAULT, UpdaterSettings.builder().setKeepAll(true).setVersioning(new BasicVersioning("version")).build());
         GUIS = new Config(new File(getDataFolder(), "guis.yml"), getResource("guis.yml"), GeneralSettings.builder().setUseDefaults(false).build(), LoaderSettings.builder().setAutoUpdate(true).build(), DumperSettings.DEFAULT, UpdaterSettings.builder().setKeepAll(true).setVersioning(new BasicVersioning("version")).build());
@@ -76,14 +74,15 @@ public final class AxTrade extends AxPlugin {
 
         Database.setup();
 
-        Commands.registerCommand();
+        CommandManager.load();
 
         Bukkit.getConsoleSender().sendMessage(StringUtils.formatToString("&#00FFDD[AxTrade] Loaded plugin!"));
 
         metrics = new AxMetrics(this, 8);
         metrics.start();
 
-        if (CONFIG.getBoolean("update-notifier.enabled", true)) new UpdateNotifier(this, 5943);
+        UpdateNotifier.init(CONFIG, LANG);
+        if (CONFIG.getBoolean("update-notifier.enabled", true)) new UpdateNotifier();
     }
 
     public void disable() {
@@ -97,5 +96,6 @@ public final class AxTrade extends AxPlugin {
         FeatureFlags.USE_LEGACY_HEX_FORMATTER.set(true);
         FeatureFlags.PLACEHOLDER_API_HOOK.set(true);
         FeatureFlags.PLACEHOLDER_API_IDENTIFIER.set("axtrade");
+        FeatureFlags.ENABLE_PACKET_LISTENERS.set(true);
     }
 }

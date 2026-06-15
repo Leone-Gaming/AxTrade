@@ -2,7 +2,6 @@ package com.artillexstudios.axtrade.utils;
 
 import com.artillexstudios.axapi.items.WrappedItemStack;
 import com.artillexstudios.axapi.libs.boostedyaml.block.implementation.Section;
-import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,7 @@ public class BlacklistUtils {
         try {
             List<Map<String, Object>> list = CONFIG.getMapList("blacklist-items");
             if (list == null || list.isEmpty()) return false;
-            for (ItemStack stack : ShulkerUtils.getShulkerContents(it)) {
+            for (ItemStack stack : ShulkerUtils.getStorageContents(it, true)) {
                 if (stack == null || stack.getType().isAir()) continue;
                 WrappedItemStack wrap = WrappedItemStack.wrap(stack);
                 for (Map<String, Object> map : list) {

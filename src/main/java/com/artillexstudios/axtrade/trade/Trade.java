@@ -3,6 +3,7 @@ package com.artillexstudios.axtrade.trade;
 import com.artillexstudios.axapi.scheduler.Scheduler;
 import com.artillexstudios.axapi.utils.ContainerUtils;
 import com.artillexstudios.axtrade.AxTrade;
+import com.artillexstudios.axapi.utils.PaperUtils;
 import com.artillexstudios.axtrade.api.events.AxTradeAbortEvent;
 import com.artillexstudios.axtrade.api.events.AxTradeCompleteEvent;
 import com.artillexstudios.axtrade.currency.CurrencyProcessor;
@@ -14,9 +15,13 @@ import com.artillexstudios.axtrade.utils.SoundUtils;
 import com.artillexstudios.axtrade.utils.TaxUtils;
 import com.artillexstudios.axtrade.utils.Utils;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -47,21 +52,24 @@ public class Trade {
 
     public void end() {
         ended = true;
-        Scheduler.get().run(task -> Trades.removeTrade(this));
 
-        if (player1 != null && player1.getPlayer().isOnline()) {
-            Scheduler.get().runAt(player1.getPlayer().getLocation(), scheduledTask -> {
-                player1.getPlayer().closeInventory();
-                player1.getPlayer().updateInventory();
+        {
+            Player player = player1.getPlayer();
+            execute(player, () -> {
+                closeAndUpdate(player1.getPlayer());
             });
         }
-
-        if (player2 != null && player2.getPlayer().isOnline()) {
-            Scheduler.get().runAt(player2.getPlayer().getLocation(), scheduledTask -> {
-                player2.getPlayer().closeInventory();
-                player2.getPlayer().updateInventory();
+        {
+            Player player = player2.getPlayer();
+            execute(player, () -> {
+                closeAndUpdate(player2.getPlayer());
             });
         }
+    }
+
+    private void closeAndUpdate(Player player) {
+        player.closeInventory();
+        player.updateInventory();
     }
 
     public void abort() {
@@ -75,16 +83,14 @@ public class Trade {
         Bukkit.getPluginManager().callEvent(event);
 
         end();
-        if (player1.getTradeGui() != null) {
-            player1.getTradeGui().getItems(false).forEach(itemStack -> {
-                if (itemStack == null) return;
-                player1.getPlayer().getInventory().addItem(itemStack);
-            });
-        }
+        player1.getTradeGui().getItems(false).forEach(itemStack -> {
+            if (itemStack == null) return;
+            addOrDrop(player1.getPlayer().getInventory(), List.of(itemStack), player1.getPlayer().getLocation());
+        });
         if (player2.getTradeGui() != null) {
             player2.getTradeGui().getItems(false).forEach(itemStack -> {
                 if (itemStack == null) return;
-                player2.getPlayer().getInventory().addItem(itemStack);
+                addOrDrop(player2.getPlayer().getInventory(), List.of(itemStack), player2.getPlayer().getLocation());
             });
         }
         HistoryUtils.writeToHistory(String.format("Aborted: %s - %s", player1.getPlayer().getName(), player2.getPlayer().getName()));
@@ -92,6 +98,9 @@ public class Trade {
         MESSAGEUTILS.sendLang(player2.getPlayer(), "trade.aborted", Map.of("%player%", player1.getPlayer().getName()));
         SoundUtils.playSound(player1.getPlayer(), "aborted");
         SoundUtils.playSound(player2.getPlayer(), "aborted");
+        Scheduler.get().run(scheduledTask -> {
+            Trades.removeTrade(this);
+        });
     }
 
     public void complete() {
@@ -154,10 +163,11 @@ public class Trade {
                     String fullCurrencyAmount = NumberUtils.formatNumber(entry.getValue());
                     String taxedCurrencyAmount = NumberUtils.formatNumber(amountAfterTax);
 
-                    if (amountAfterTax == entry.getValue())
+                    if (amountAfterTax == entry.getValue()) {
                         player1Currencies.add(currencyName + ": " + taxedCurrencyAmount);
-                    else
+                    } else {
                         player1Currencies.add(currencyName + ": " + taxedCurrencyAmount + " (+ tax: " + NumberUtils.formatNumber(entry.getValue() - amountAfterTax) + ")");
+                    }
 
                     if (CONFIG.getBoolean("enable-trade-summaries")) {
                         MESSAGEUTILS.sendFormatted(player2.getPlayer(), LANG.getString("summary.get.currency"), Map.of("%amount%", taxedCurrencyAmount, "%currency%", currencyName));
@@ -175,10 +185,11 @@ public class Trade {
                     String fullCurrencyAmount = NumberUtils.formatNumber(entry.getValue());
                     String taxedCurrencyAmount = NumberUtils.formatNumber(amountAfterTax);
 
-                    if (amountAfterTax == entry.getValue())
+                    if (amountAfterTax == entry.getValue()) {
                         player2Currencies.add(currencyName + ": " + taxedCurrencyAmount);
-                    else
+                    } else {
                         player2Currencies.add(currencyName + ": " + taxedCurrencyAmount + " (+ tax: " + NumberUtils.formatNumber(entry.getValue() - amountAfterTax) + ")");
+                    }
 
                     if (CONFIG.getBoolean("enable-trade-summaries")) {
                         MESSAGEUTILS.sendFormatted(player2.getPlayer(), LANG.getString("summary.give.currency"), Map.of("%amount%", fullCurrencyAmount, "%currency%", currencyName));
@@ -214,7 +225,16 @@ public class Trade {
 
                 HistoryUtils.writeToHistory(
                         String.format("%s: [Currencies: %s] [Items: %s] | %s: [Currencies: %s] [Items: %s]",
-                                player1.getPlayer().getName(), player1Currencies.isEmpty() ? "---" : String.join(", ", player1Currencies), player1Items.isEmpty() ? "---" : String.join(", ", player1Items), player2.getPlayer().getName(), player2Currencies.isEmpty() ? "---" : String.join(", ", player2Currencies), player2Items.isEmpty() ? "---" : String.join(", ", player2Items)));
+                                player1.getPlayer().getName(),
+                                player1Currencies.isEmpty() ? "---" : String.join(", ", player1Currencies),
+                                player1Items.isEmpty() ? "---" : String.join(", ", player1Items),
+                                player2.getPlayer().getName(),
+                                player2Currencies.isEmpty() ? "---" : String.join(", ", player2Currencies),
+                                player2Items.isEmpty() ? "---" : String.join(", ", player2Items)
+                        )
+                );
+
+                Scheduler.get().run(scheduledTask -> Trades.removeTrade(this));
             });
         });
     }
@@ -237,5 +257,34 @@ public class Trade {
 
     public boolean isEnded() {
         return ended;
+    }
+
+    private void addOrDrop(Inventory inventory, List<ItemStack> items, Location location) {
+        boolean folia = PaperUtils.isFolia();
+        boolean sync = folia ? Scheduler.get().isOwnedByCurrentRegion(location) : Bukkit.isPrimaryThread();
+
+        Location copy = location.clone();
+        Runnable runnable = () -> {
+            for (ItemStack key : items) {
+                HashMap<Integer, ItemStack> remaining = inventory.addItem(key);
+                remaining.forEach((k, v) -> copy.getWorld().dropItem(copy, v));
+            }
+        };
+
+        if (sync) {
+            runnable.run();
+        } else {
+            Scheduler.get().runAt(copy, runnable);
+        }
+    }
+
+    private void execute(Player player, Runnable runnable) {
+        boolean folia = PaperUtils.isFolia();
+        boolean sync = folia ? Scheduler.get().isOwnedByCurrentRegion(player.getLocation()) : Bukkit.isPrimaryThread();
+        if (sync) {
+            runnable.run();
+        } else {
+            Scheduler.get().run(player, task -> runnable.run(), () -> {});
+        }
     }
 }

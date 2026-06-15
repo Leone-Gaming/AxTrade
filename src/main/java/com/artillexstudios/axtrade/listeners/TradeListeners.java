@@ -7,12 +7,14 @@ import com.artillexstudios.axtrade.trade.Trades;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerPickupArrowEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.NotNull;
 
@@ -31,14 +33,14 @@ public class TradeListeners implements Listener {
     }
 
     public void handleQuitTrade(@NotNull PlayerQuitEvent event) {
-        final Player player = event.getPlayer();
-        final Trade trade = Trades.getTrade(player);
+        Player player = event.getPlayer();
+        Trade trade = Trades.getTrade(player);
         if (trade == null) return;
         trade.abort();
     }
 
     public void handleQuitRequest(@NotNull PlayerQuitEvent event) {
-        final Iterator<Request> iterator = Requests.getRequests().iterator();
+        Iterator<Request> iterator = Requests.getRequests().iterator();
         while (iterator.hasNext()) {
             Request request = iterator.next();
             if (request.getSender().equals(event.getPlayer())) {
@@ -58,16 +60,21 @@ public class TradeListeners implements Listener {
         cancelIfTrading(event.getPlayer(), event);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onPickup(@NotNull EntityPickupItemEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
         cancelIfTrading(player, event);
     }
 
     @EventHandler
+    public void onArrowPickup(@NotNull PlayerPickupArrowEvent event) {
+        cancelIfTrading(event.getPlayer(), event);
+    }
+
+    @EventHandler
     public void onMove(@NotNull PlayerMoveEvent event) {
         if (event.getTo() == null) return;
-        final Trade trade = Trades.getTrade(event.getPlayer());
+        Trade trade = Trades.getTrade(event.getPlayer());
         if (trade == null) return;
         if (!CONFIG.getBoolean("abort.move", true)) return;
         if (System.currentTimeMillis() - trade.getPrepTime() < 1_000L) return;
@@ -77,7 +84,7 @@ public class TradeListeners implements Listener {
 
     @EventHandler
     public void onInteract(@NotNull PlayerInteractEvent event) {
-        final Trade trade = Trades.getTrade(event.getPlayer());
+        Trade trade = Trades.getTrade(event.getPlayer());
         if (trade == null) return;
         if (!CONFIG.getBoolean("abort.interact", true)) return;
         if (System.currentTimeMillis() - trade.getPrepTime() < 1_000L) return;
@@ -87,7 +94,7 @@ public class TradeListeners implements Listener {
 
     @EventHandler
     public void onCommand(@NotNull PlayerCommandPreprocessEvent event) {
-        final Trade trade = Trades.getTrade(event.getPlayer());
+        Trade trade = Trades.getTrade(event.getPlayer());
         if (trade == null) return;
         if (!CONFIG.getBoolean("abort.command", true)) return;
         event.setCancelled(true);

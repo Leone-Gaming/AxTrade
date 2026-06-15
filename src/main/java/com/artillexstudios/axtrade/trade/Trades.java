@@ -4,6 +4,8 @@ import com.artillexstudios.axtrade.utils.SoundUtils;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -11,6 +13,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static com.artillexstudios.axtrade.AxTrade.MESSAGEUTILS;
 
 public class Trades {
+    private static final List<Trade> trades = new ArrayList<>();
     private static final List<Trade> trades = new CopyOnWriteArrayList<>();
 
     public static void addTrade(Player p1, Player p2) {
@@ -31,11 +34,16 @@ public class Trades {
     }
 
     public static boolean isTrading(Player player) {
-        return trades.stream().anyMatch(trade -> trade.player1.getPlayer().equals(player) || trade.player2.getPlayer().equals(player));
+        return getTrade(player) != null;
     }
 
     @Nullable
     public static Trade getTrade(Player player) {
-        return trades.stream().filter(trade -> trade != null && (trade.player1.getPlayer().equals(player) || trade.player2.getPlayer().equals(player))).findAny().orElse(null);
+        for (Trade trade : trades) {
+            if (trade.player1.getPlayer().equals(player) || trade.player2.getPlayer().equals(player)) {
+                return trade;
+            }
+        }
+        return null;
     }
 }
