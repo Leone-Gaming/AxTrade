@@ -37,7 +37,7 @@ public class CurrencyTradeItem implements TradeItem {
 
     @Override
     public String serialize() {
-        return null;
+        return currency.name();
     }
 
     public enum CurrencyType {

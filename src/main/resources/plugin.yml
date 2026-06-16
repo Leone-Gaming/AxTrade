@@ -18,6 +18,7 @@ permissions:
     default: op
 
 softdepend:
+  - WorldGuard
   - AxQuestBoard
   - CoinsEngine
   - ExcellentEconomy
