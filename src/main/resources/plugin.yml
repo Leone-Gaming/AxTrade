@@ -18,21 +18,5 @@ permissions:
     default: op
 
 softdepend:
-  - AxQuestBoard
-  - CoinsEngine
-  - ExcellentEconomy
-  - Kingdoms
   - PlaceholderAPI
-  - PlayerPoints
-  - RivalHarvesterHoes
-  - RoyaleEconomy
-  - SuperMobCoins
-  - TheOnly-MobCoins
-  - TokenManager
-  - UltraEconomy
-  - RedisEconomy
-  - BeastTokens
-  - EcoBits
-  - RivalCredits
-  - AxShulkers
-  - AxHoes
+  - Vault

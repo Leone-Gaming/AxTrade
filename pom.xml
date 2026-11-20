@@ -100,14 +100,6 @@
             <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
         </repository>
         <repository>
-            <id>techscode</id>
-            <url>https://repo.techscode.com/repository/maven-releases/</url>
-        </repository>
-        <repository>
-            <id>rosewood-repo</id>
-            <url>https://repo.rosewooddev.io/repository/public/</url>
-        </repository>
-        <repository>
             <id>alessiodp</id>
             <url>https://repo.alessiodp.com/releases/</url>
         </repository>
@@ -174,57 +166,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.artillexstudios</groupId>
-            <artifactId>AxQuestBoardAPI</artifactId>
-            <version>3</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.github.Realizedd</groupId>
-            <artifactId>TokenManager</artifactId>
-            <version>3.2.4</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>com.github.MilkBowl</groupId>
             <artifactId>VaultAPI</artifactId>
             <version>1.7</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.black_ixx</groupId>
-            <artifactId>playerpoints</artifactId>
-            <version>3.2.6</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.artillexstudios</groupId>
-            <artifactId>AxShulkers</artifactId>
-            <version>1.20.0</version>
-            <scope>provided</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.github.Emibergo02</groupId>
-            <artifactId>RedisEconomy</artifactId>
-            <version>4.3.9</version>
             <scope>provided</scope>
         </dependency>
     </dependencies>
