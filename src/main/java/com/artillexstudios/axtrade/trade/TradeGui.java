@@ -4,6 +4,7 @@ import com.artillexstudios.axapi.gui.SignInput;
 import com.artillexstudios.axapi.nms.NMSHandlers;
 import com.artillexstudios.axapi.scheduler.Scheduler;
 import com.artillexstudios.axapi.utils.Cooldown;
+import com.artillexstudios.axapi.utils.PaperUtils;
 import com.artillexstudios.axapi.utils.StringUtils;
 import com.artillexstudios.axtrade.hooks.HookManager;
 import com.artillexstudios.axtrade.hooks.currency.CurrencyHook;
@@ -36,7 +37,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static com.artillexstudios.axtrade.AxTrade.CONFIG;
 import static com.artillexstudios.axtrade.AxTrade.GUIS;
@@ -44,7 +44,7 @@ import static com.artillexstudios.axtrade.AxTrade.LANG;
 import static com.artillexstudios.axtrade.AxTrade.MESSAGEUTILS;
 
 public class TradeGui extends GuiFrame {
-    private static final Cooldown<Player> confirmCooldown = Cooldown.create();
+    private static final Cooldown<Player> confirmCooldown = PaperUtils.isFolia() ? Cooldown.createSynchronized() : Cooldown.create();;
     protected final Trade trade;
     private final TradePlayer player;
     protected final StorageGui gui;
@@ -150,6 +150,10 @@ public class TradeGui extends GuiFrame {
     }
 
     private void handleClickTop(InventoryClickEvent event) {
+        if (trade.isEnded()) {
+            event.setCancelled(true);
+            return;
+        }
         if (confirmCooldown.hasCooldown(player.getPlayer())) {
             event.setCancelled(true);
             return;
@@ -183,6 +187,10 @@ public class TradeGui extends GuiFrame {
     }
 
     private void handleClickBottom(InventoryClickEvent event) {
+        if (trade.isEnded()) {
+            event.setCancelled(true);
+            return;
+        }
         ItemStack it = getItem(event);
 
         if (BlacklistUtils.isBlacklisted(it)) {
@@ -211,6 +219,10 @@ public class TradeGui extends GuiFrame {
     }
 
     private void handleDrag(InventoryDragEvent event) {
+        if (trade.isEnded()) {
+            event.setCancelled(true);
+            return;
+        }
         boolean ownInv = true;
         for (int s : event.getRawSlots()) {
             if (s > 53) continue;
@@ -262,10 +274,10 @@ public class TradeGui extends GuiFrame {
         trade.prepTime = System.currentTimeMillis();
         event.getWhoClicked().closeInventory();
 
-        var lines = StringUtils.formatList(LANG.getStringList("currency-editor-sign"));
+        List<Component> lines = StringUtils.formatList(LANG.getStringList("currency-editor-sign"));
         lines.set(0, Component.empty());
 
-        var sign = new SignInput.Builder().setLines(lines).setHandler((player1, result) -> {
+        SignInput sign = new SignInput.Builder().setLines(lines).setHandler((player1, result) -> {
             if (trade.isEnded()) return;
             trade.prepTime = System.currentTimeMillis();
             String am = result[0];
@@ -273,13 +285,17 @@ public class TradeGui extends GuiFrame {
             if (addResult == TradePlayer.Result.SUCCESS) {
                 MESSAGEUTILS.sendLang(player1, "currency-editor.success");
             } else {
-                if (Objects.requireNonNull(addResult) == TradePlayer.Result.NOT_ENOUGH_CURRENCY) {
-                    MESSAGEUTILS.sendLang(player1, "currency-editor.not-enough");
-                } else {
-                    MESSAGEUTILS.sendLang(player1, "currency-editor.failed");
+                switch (addResult) {
+                    case NOT_ENOUGH_CURRENCY -> {
+                        MESSAGEUTILS.sendLang(player1, "currency-editor.not-enough");
+                    }
+                    default -> {
+                        MESSAGEUTILS.sendLang(player1, "currency-editor.failed");
+                    }
                 }
             }
-            Scheduler.get().runAt(player.getPlayer().getLocation(), scheduledTask -> {
+
+            Runnable runnable = () -> {
                 if (trade.isEnded()) return;
                 open();
                 inSign = false;
@@ -287,13 +303,20 @@ public class TradeGui extends GuiFrame {
                 currentTitle = "";
                 player.cancel();
                 updateTitle();
-            });
+            };
+            Scheduler.get().run(player.getPlayer(), task -> {
+                runnable.run();
+            }, runnable);
         }).build(player.getPlayer());
         sign.open();
     }
 
     public void handleShulkerClick(InventoryClickEvent event) {
         event.setCancelled(true);
+        if (!SafetyManager.SHULKER_VIEWER.get()) {
+            MESSAGEUTILS.sendLang(player.getPlayer(), "safety");
+            return;
+        }
         player.cancel();
         trade.update();
         inSign = true;
@@ -356,19 +379,24 @@ public class TradeGui extends GuiFrame {
         if (currentTitle.equals(newTitle)) return;
         this.currentTitle = newTitle;
 
-        Scheduler.get().runLater(task -> {
+        Runnable runnable = () -> {
             Inventory topInv = player.getPlayer().getOpenInventory().getTopInventory();
             if (topInv.equals(gui.getInventory())) {
                 NMSHandlers.getNmsHandler().setTitle(player.getPlayer().getOpenInventory().getTopInventory(), StringUtils.format(newTitle));
             }
-        }, 1);
+        };
+
+        Scheduler.get().runLater(player.getPlayer(), task -> {
+            runnable.run();
+        }, runnable, 1);
     }
 
     public void open() {
-        Scheduler.get().runAt(player.getPlayer().getLocation(), scheduledTask -> {
+        Runnable runnable = () -> {
             gui.open(player.getPlayer());
             updateTitle();
             opened = true;
-        });
+        };
+        Scheduler.get().execute(player.getPlayer(), runnable, runnable, 0);
     }
 }

@@ -19,7 +19,8 @@ import static com.artillexstudios.axtrade.AxTrade.CONFIG;
 
 public enum SafetyManager {
     TRADING,
-    CURRENCY_SELECTOR;
+    CURRENCY_SELECTOR,
+    SHULKER_VIEWER;
 
     private static final JavaPlugin instance = AxTrade.getInstance();
     private static final Gson gson = new GsonBuilder().create();
@@ -42,9 +43,15 @@ public enum SafetyManager {
 
     private static void check() {
         String str = "https://api.artillex-studios.com/safety/?plugin=%s&version=%s&mc=%s".formatted(instance.getName(), instance.getDescription().getVersion(), Version.getProtocolVersion());
-        String body = ExceptionUtils.catching(() -> Requests.get(str, Map.of()).body());
+        JsonArray disabled;
+        try {
+            String body = Requests.get(str, Map.of()).body();
+            disabled = gson.fromJson(body, JsonArray.class);
+        } catch (Exception ex) {
+            return;
+        }
 
-        JsonArray disabled = gson.fromJson(body, JsonArray.class);
+        if (disabled == null) return;
         for (SafetyManager value : SafetyManager.values()) {
             value.set(true);
         }
