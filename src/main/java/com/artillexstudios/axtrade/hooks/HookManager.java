@@ -1,8 +1,15 @@
 package com.artillexstudios.axtrade.hooks;
 
 import com.artillexstudios.axapi.libs.boostedyaml.block.implementation.Section;
+import com.artillexstudios.axapi.reflection.ClassUtils;
 import com.artillexstudios.axapi.utils.StringUtils;
+import com.artillexstudios.axtrade.hooks.currency.AxHoesHook;
+import com.artillexstudios.axtrade.hooks.currency.AxQuestBoardHook;
+import com.artillexstudios.axtrade.hooks.currency.BeastTokensHook;
+import com.artillexstudios.axtrade.hooks.currency.CoinsEngineHook;
 import com.artillexstudios.axtrade.hooks.currency.CurrencyHook;
+import com.artillexstudios.axtrade.hooks.currency.EcoBitsHook;
+import com.artillexstudios.axtrade.hooks.currency.ExcellentEconomyHook;
 import com.artillexstudios.axtrade.hooks.currency.ExperienceHook;
 import com.artillexstudios.axtrade.hooks.currency.PlaceholderCurrencyHook;
 import com.artillexstudios.axtrade.hooks.currency.VaultHook;
